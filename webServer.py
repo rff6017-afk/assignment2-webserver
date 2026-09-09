@@ -4,6 +4,17 @@ from socket import *
 import sys
 
 
+def build_response(status_line, body, content_type="text/html"):
+    body_bytes = body if isinstance(body, bytes) else body.encode()
+    headers = (
+        f"{status_line}\r\n"
+        f"Server: SimplePythonServer/1.0\r\n"
+        f"Content-Type: {content_type}\r\n"
+        f"Content-Length: {len(body_bytes)}\r\n"
+        f"Connection: close\r\n"
+        f"\r\n"
+    )
+    return headers.encode() + body_bytes
 
 def webServer(port=13331):
   serverSocket = socket(AF_INET, SOCK_STREAM)
@@ -38,15 +49,7 @@ def webServer(port=13331):
       #Fill in start 
               
       #Content-Type is an example on how to send a header as bytes. There are more!
-      response = (
-              "HTTP/1.1 200 OK\r\n"
-              "Content-Type: text/html\r\n"
-              "charset=UTF-8\r\n"
-              f"Content-Length: {len(data.encode())}\r\n"
-              "Connection: close\r\n\r\n"
-              f"{data}"
-          )
-      
+      response = build_response("HTTP/1.1 200 OK", data)
       #Note that a complete header must end with a blank line, creating the four-byte sequence "\r\n\r\n" Refer to https://w3.cs.jmu.edu/kirkpams/OpenCSF/Books/csf/html/TCPSockets.html
 
       #Fill in end
@@ -59,7 +62,7 @@ def webServer(port=13331):
 
       # Fill in start
 
-      connectionSocket.sendall(response.encode())
+      connectionSocket.sendall(response)
       # Fill in end
         
       connectionSocket.close() #closing the connection socket
@@ -68,7 +71,8 @@ def webServer(port=13331):
       # Send response message for invalid request due to the file not being found (404)
       # Remember the format you used in the try: block!
       #Fill in start
-      connectionSocket.send(b"Content-Type: text/html; charset=UTF-8\r\nInvalid Request, file not found.")
+      body = "<html><body><h1>404 Not Found</h1></body></html>"
+      response = build_response("HTTP/1.1 404 Not Found", body)
       #Fill in end
 
       #Close client socket
